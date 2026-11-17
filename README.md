@@ -6,6 +6,8 @@ Desinstalador nativo para macOS. Lista tus apps, muestra sus procesos y archivos
 
 Hecho en SwiftUI, para macOS 15 o posterior. Interfaz en español.
 
+Página del proyecto: https://davidmenendez9901.github.io/SinRastro/
+
 > **Estado: experimental.** La parte que actúa como administrador (borrar en `/Library`, restaurar y vaciar como root) está cubierta por tests, pero aún no se ha ejecutado con privilegios reales. Úsala bajo tu responsabilidad y revisa siempre la lista antes de confirmar.
 
 ## Qué hace
