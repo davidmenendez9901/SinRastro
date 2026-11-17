@@ -144,6 +144,22 @@ struct Uninstaller: Sendable {
             }
         }
 
+        // La carpeta del fabricante no se deja vacía. En la Papelera se conserva
+        // para que Finder pueda devolver el elemento; lo que guardó el helper en
+        // cuarentena también, porque al restaurar necesita que siga existiendo.
+        if request.mode != .trash {
+            var folders: [String] = []
+            for result in report.results where result.succeeded {
+                if request.mode == .quarantine, viaHelper.contains(result.path) { continue }
+                if let folder = policy.vendorFolder(of: result.path), !folders.contains(folder) { folders.append(folder) }
+            }
+            for folder in folders {
+                PathPolicy.removeIfEmpty(folder)
+                var st = stat()
+                if lstat(folder, &st) != 0 { report.notes.append("También se quitó la carpeta vacía \(folder)") }
+            }
+        }
+
         // 7. Índice de la cuarentena y registro.
         if let session {
             let entries = report.results.compactMap { result -> QuarantineSession.Entry? in

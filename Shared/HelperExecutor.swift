@@ -108,6 +108,10 @@ struct HelperExecutor: Sendable {
         }
 
         if manifest.mode == .delete {
+            // La carpeta del fabricante, si se quedó vacía.
+            for item in allowed {
+                if let folder = policy.vendorFolder(of: item.path) { PathPolicy.removeIfEmpty(folder) }
+            }
             for id in manifest.forgetPackages where packages.ids.contains(id) {
                 if hooks.packages.forget(id) { report.forgotten.append(id) }
             }

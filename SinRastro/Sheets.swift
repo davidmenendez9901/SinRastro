@@ -41,6 +41,18 @@ struct ConfirmSheet: View {
             .frame(height: 200)
             .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
 
+            if model.leftBehindCount > 0 {
+                let count = model.leftBehindCount
+                Label {
+                    Text(count == 1
+                        ? "Queda 1 elemento sin marcar. Cuando la app ya no esté, SinRastro no podrá volver a encontrarlo."
+                        : "Quedan \(count) elementos sin marcar. Cuando la app ya no esté, SinRastro no podrá volver a encontrarlos.")
+                        .fixedSize(horizontal: false, vertical: true)
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                }
+                .font(.callout)
+            }
             if mode == .quarantine {
                 Toggle("Eliminar definitivamente ahora, sin cuarentena", isOn: $permanent)
             }

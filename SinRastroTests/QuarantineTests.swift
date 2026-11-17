@@ -68,6 +68,41 @@ struct VendorFolderTests {
         #expect(!scan.omitted.contains { $0.path == chrome })
     }
 
+    @Test func laCarpetaDelFabricanteNoSeDejaVacia() async {
+        let app = fx.makeApp("Android Studio", bundleID: "com.google.android.studio")
+        let support = fx.folder(fx.user("Application Support/Google/AndroidStudio2026.1"))
+        let cache = fx.folder(fx.user("Caches/Google/AndroidStudio2026.1"))
+        let systemSupport = fx.folder(fx.sys("Application Support/Google/AndroidStudio2026.1"))
+        // En Caches el fabricante tiene más cosas; en Application Support solo el .DS_Store.
+        let chromeCache = fx.folder(fx.user("Caches/Google/Chrome"))
+        fx.file(fx.user("Application Support/Google/.DS_Store"))
+        let scan = fx.scan(app)
+        let items = scan.allItems.map {
+            Residue(path: $0.path, kind: $0.kind, scope: $0.scope, category: $0.category,
+                    confidence: $0.confidence, needsAdmin: $0.scope == .system && $0.kind != .bundle)
+        }
+        let report = await fx.uninstaller().run(UninstallRequest(scan: scan, items: items, mode: .delete))
+
+        #expect(report.failed.isEmpty)
+        for path in [support, cache, systemSupport] { #expect(!fx.exists(path)) }
+        #expect(!fx.exists(fx.user("Application Support/Google")))
+        #expect(!fx.exists(fx.sys("Application Support/Google")))
+        #expect(fx.exists(chromeCache))
+        #expect(fx.exists(fx.user("Application Support")) && fx.exists(fx.user("Caches/Google")))
+        #expect(report.notes.contains { $0.contains(fx.user("Application Support/Google")) })
+        #expect(report.notes.contains { $0.contains(fx.sys("Application Support/Google")) })
+        #expect(!report.notes.contains { $0.contains(fx.user("Caches/Google")) })
+    }
+
+    @Test func enLaPapeleraSeConservaLaCarpetaDelFabricante() async {
+        let app = fx.makeApp("Android Studio", bundleID: "com.google.android.studio")
+        let support = fx.folder(fx.user("Application Support/Google/AndroidStudio2026.1"))
+        let scan = fx.scan(app)
+        let report = await fx.uninstaller().run(UninstallRequest(scan: scan, items: scan.allItems, mode: .trash))
+        #expect(report.failed.isEmpty && !fx.exists(support))
+        #expect(fx.exists(fx.user("Application Support/Google")))
+    }
+
     @Test func dosCopiasDeLaMismaAppNoSeQuitanDatosEntreSi() {
         let app = fx.makeApp("Android Studio", bundleID: "com.google.android.studio")
         fx.makeApp("Android Studio", bundleID: "com.google.android.studio.dev", in: fx.layout.userApplications)
@@ -107,6 +142,8 @@ struct QuarantineTests {
         #expect(report.failed.isEmpty)
         #expect(report.results.allSatisfy { $0.outcome == .quarantined })
         for path in mine + [app.path] { #expect(!fx.exists(path), "\(path)") }
+        // La carpeta del fabricante se quita vacía y vuelve al restaurar.
+        #expect(!fx.exists(fx.user("Application Support/Acme")))
 
         let quarantine = quarantine(uninstaller)
         let sessions = quarantine.sessions()

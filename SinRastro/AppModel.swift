@@ -104,6 +104,13 @@ final class AppModel {
         selectedItems.contains(where: \.needsAdmin)
     }
 
+    /// Elementos encontrados que se quedan sin marcar aunque la app sí se quita.
+    /// Sin la app instalada, SinRastro ya no puede volver a encontrarlos.
+    var leftBehindCount: Int {
+        guard let scan, checked.contains(scan.app.path) else { return 0 }
+        return scan.residues.filter { !checked.contains($0.path) }.count
+    }
+
     /// Los recibos solo se olvidan (con administrador) en el borrado definitivo.
     var selectionForgetsPackages: Bool {
         scan.map { !$0.packageIDs.isEmpty && checked.contains($0.app.path) } ?? false

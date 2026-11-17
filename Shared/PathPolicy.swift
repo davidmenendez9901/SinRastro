@@ -52,6 +52,27 @@ struct PathPolicy: Sendable {
         return nil
     }
 
+    /// Carpeta del fabricante que contiene `path` ("Application Support/Google"),
+    /// si `path` es un residuo guardado dentro de ella.
+    func vendorFolder(of path: String) -> String? {
+        let parent = PathUtil.parent(path)
+        guard
+            let vendor = identity.vendor,
+            let (outer, _) = category(forParent: PathUtil.parent(parent)),
+            outer.rule == .named,
+            PathUtil.name(parent).lowercased() == vendor
+        else { return nil }
+        return parent
+    }
+
+    /// Quita la carpeta solo si está vacía (o solo tiene el .DS_Store de Finder).
+    @discardableResult
+    static func removeIfEmpty(_ directory: String) -> Bool {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: directory)) ?? ["?"]
+        if names == [".DS_Store"] { unlink(directory + "/.DS_Store") }
+        return rmdir(directory) == 0
+    }
+
     func isApplicationsFolder(_ directory: String) -> Bool {
         let roots = [layout.systemApplications, layout.userApplications]
         if roots.contains(directory) { return true }
